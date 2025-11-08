@@ -35,10 +35,11 @@ expense-tracker delete --id 2
 ```
 
 ### Listing expenses
-Existing expenses can be listed with the `list` sub-command.
+Existing expenses can be listed with the `list` sub-command. Also supports filtering based on `category`.
 ```
 # Listing all expenses
 expense-tracker list
+expense-tracker list --category food
 ```
 
 ### Expenses summary
