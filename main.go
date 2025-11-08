@@ -30,12 +30,18 @@ func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	addDescription := addCmd.String("description", "", "description")
 	addAmount := addCmd.String("amount", "", "amount")
+	addCategory := addCmd.String("category", "", "category")
 
 	// subcommand: update
 	updateCmd := flag.NewFlagSet("update", flag.ExitOnError)
 	updateId := updateCmd.Int("id", 0, "id")
 	updateDescription := updateCmd.String("description", "", "description")
 	updateAmount := updateCmd.String("amount", "", "amount")
+	updateCategory := updateCmd.String("category", "", "category")
+
+	// subcommad: list
+	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
+	listCategory := listCmd.String("category", "", "category")
 
 	// subcommand: delete
 	deleteCmd := flag.NewFlagSet("delete", flag.ExitOnError)
@@ -56,15 +62,16 @@ func main() {
 	switch os.Args[1] {
 	case "add":
 		addCmd.Parse(os.Args[2:])
-		addExpense(&expenseList, *addDescription, *addAmount)
+		addExpense(&expenseList, *addDescription, *addAmount, *addCategory)
 	case "update":
 		updateCmd.Parse(os.Args[2:])
-		updateExpense(&expenseList, *updateId, *updateDescription, *updateAmount)
+		updateExpense(&expenseList, *updateId, *updateDescription, *updateAmount, *updateCategory)
 	case "delete":
 		deleteCmd.Parse(os.Args[2:])
 		deleteExpense(&expenseList, *deleteId)
 	case "list":
-		listExpenses(&expenseList)
+		listCmd.Parse(os.Args[2:])
+		listExpenses(&expenseList, *listCategory)
 	case "summary":
 		summaryCmd.Parse(os.Args[2:])
 		month := time.Month(*summaryMonth)

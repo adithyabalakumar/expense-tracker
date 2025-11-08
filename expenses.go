@@ -13,6 +13,7 @@ type Expense struct {
 	Id          int       `json:"id"`
 	Description string    `json:"description"`
 	Amount      float64   `json:"amount"`
+	Category    string    `json:"category"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -25,13 +26,13 @@ type ExpenseList struct {
 const expenseRegistry string = "expenses.json"
 
 func loadExpenses() ExpenseList {
-	tasks, err := os.ReadFile(expenseRegistry)
+	expenses, err := os.ReadFile(expenseRegistry)
 	if err != nil {
 		return ExpenseList{Expenses: []Expense{}, NextID: 1}
 	}
 
 	var expenseList ExpenseList
-	if err := json.Unmarshal(tasks, &expenseList); err != nil {
+	if err := json.Unmarshal(expenses, &expenseList); err != nil {
 		return ExpenseList{Expenses: []Expense{}, NextID: 1}
 	}
 	return expenseList
@@ -52,9 +53,15 @@ func saveExpenses(expenseList *ExpenseList) error {
 	return nil
 }
 
-func addExpense(expenseList *ExpenseList, description string, amount string) {
+func addExpense(expenseList *ExpenseList, description string, amount string, category string) {
 	if len(description) == 0 {
 		fmt.Println("Description cannot be empty")
+		return
+	}
+
+	if len(category) == 0 {
+		fmt.Println("Category cannot be empty")
+		return
 	}
 
 	expenseAmount, err := strconv.ParseFloat(amount, 64)
@@ -72,6 +79,7 @@ func addExpense(expenseList *ExpenseList, description string, amount string) {
 		Id:          expenseList.NextID,
 		Description: description,
 		Amount:      expenseAmount,
+		Category:    category,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -85,7 +93,7 @@ func addExpense(expenseList *ExpenseList, description string, amount string) {
 	}
 }
 
-func updateExpense(expenseList *ExpenseList, id int, description string, amount string) {
+func updateExpense(expenseList *ExpenseList, id int, description string, amount string, category string) {
 	expenseId := id
 	expenseAmount, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
@@ -100,9 +108,14 @@ func updateExpense(expenseList *ExpenseList, id int, description string, amount 
 
 	for i := range expenseList.Expenses {
 		if expenseList.Expenses[i].Id == expenseId {
-			expenseList.Expenses[i].Amount = expenseAmount
-			if len(description) != 0 {
+			if expenseList.Expenses[i].Amount != expenseAmount {
+				expenseList.Expenses[i].Amount = expenseAmount
+			}
+			if len(description) != 0 && expenseList.Expenses[i].Description != description {
 				expenseList.Expenses[i].Description = description
+			}
+			if len(category) != 0 && expenseList.Expenses[i].Category != category {
+				expenseList.Expenses[i].Category = category
 			}
 			expenseList.Expenses[i].UpdatedAt = time.Now()
 			err := saveExpenses(expenseList)
@@ -133,17 +146,19 @@ func deleteExpense(expenseList *ExpenseList, id int) {
 	fmt.Printf("Expense with ID: %d not found\n", expenseId)
 }
 
-func listExpenses(expenseList *ExpenseList) {
+func listExpenses(expenseList *ExpenseList, category string) {
 	if len(expenseList.Expenses) == 0 {
 		fmt.Println("No expenses found.")
 		return
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tDate\tDescription\tAmount")
-	fmt.Fprintln(w, "----\t----\t----\t----")
+	fmt.Fprintln(w, "ID\tDate\tDescription\tCategory\tAmount")
+	fmt.Fprintln(w, "----\t----\t----\t----\t----")
 	for _, expense := range expenseList.Expenses {
-		fmt.Fprintf(w, "%d\t%s\t%s\t%.2f\n", expense.Id, expense.CreatedAt.Format("2006-01-02"), expense.Description, expense.Amount)
+		if len(category) == 0 || expense.Category == category {
+			fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%.2f\n", expense.Id, expense.CreatedAt.Format("2006-01-02"), expense.Description, expense.Category, expense.Amount)
+		}
 	}
 	w.Flush()
 }
